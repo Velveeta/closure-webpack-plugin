@@ -47,6 +47,14 @@ function findChunkFile(chunk, chunkId, outputFilePath) {
   return undefined;
 }
 
+function getChunkParents(chunk) {
+  try {
+    return chunk.getParents();
+  } catch (e) {
+    return chunk.parents;
+  }
+}
+
 class ClosureCompilerPlugin {
   constructor(options, compilerFlags) {
     validateOptions(
@@ -222,7 +230,8 @@ class ClosureCompilerPlugin {
     const chunkMap = ClosureCompilerPlugin.buildChunkMap(originalChunks);
     const chunkFlatMap = ClosureCompilerPlugin.buildChunkFlatMap(chunkMap);
     originalChunks.forEach((chunk) => {
-      if (chunk.parents.length !== 0) {
+      const parents = getChunkParents(chunk);
+      if (parents.length !== 0) {
         return;
       }
       const moduleDefs = [];
@@ -339,7 +348,8 @@ class ClosureCompilerPlugin {
           });
         }
       }
-      if (chunk.parents.length === 0) {
+      const parents = getChunkParents(chunk);
+      if (parents.length === 0) {
         uniqueId += this.addChunksToCompilation(
           compilation,
           chunk,
@@ -744,10 +754,11 @@ Use the CommonsChunkPlugin to ensure a module exists in only one bundle.`,
    */
   static buildChunkMap(allChunks, startingChunk = null) {
     function isTargetChunk(chunk) {
+      const parents = getChunkParents(chunk);
       if (startingChunk === null) {
-        return chunk.parents.length === 0;
+        return parents.length === 0;
       }
-      return chunk.parents.includes(startingChunk);
+      return parents.includes(startingChunk);
     }
 
     const chunkMap = new Map();
